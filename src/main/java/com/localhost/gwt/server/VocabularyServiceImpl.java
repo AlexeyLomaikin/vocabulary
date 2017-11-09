@@ -11,6 +11,7 @@ import com.localhost.gwt.client.service.VocabularyService;
 import com.localhost.gwt.shared.model.Level;
 import com.localhost.gwt.shared.model.Translation;
 
+import java.io.File;
 import java.sql.*;
 import java.util.*;
 
@@ -20,8 +21,13 @@ import java.util.*;
 public class VocabularyServiceImpl extends RemoteServiceServlet implements VocabularyService {
     private static final String driverName = "org.sqlite.JDBC";
     private static final String connectionString = "jdbc:sqlite::resource:/vocabulary.s3db";
-    private static final String fullConnectionString = "jdbc:sqlite:C:/Users/AlexL/Desktop/Java_projects" +
-            "/Vocabulary/src/main/resources/vocabulary.s3db";
+    private static final String fullConnectionString = ("jdbc:sqlite:" + new File(".").getAbsolutePath() +
+            "/src/main/resources/vocabulary.s3db").replaceAll("\\\\", "/");
+
+    public static void main(String... args) {
+        System.out.print(fullConnectionString);
+    }
+
     private static final String GET_WORDS_SQL =
                     "select w.*, l.lang_name, l.lang_short_name from\n" +
                     "  words w, languages l, words_levels wl\n" +
@@ -51,6 +57,7 @@ public class VocabularyServiceImpl extends RemoteServiceServlet implements Vocab
 
     public ServiceResponse getLevels() throws SharedRuntimeException {
         try {
+
             Dao<Level, String> dao = DaoManager.createDao(new JdbcConnectionSource(connectionString), Level.class);
             ServiceResponse response = new ServiceResponse();
             response.setLevels(dao.queryForAll());
