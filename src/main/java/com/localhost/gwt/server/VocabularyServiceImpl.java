@@ -30,7 +30,6 @@ public class VocabularyServiceImpl extends RemoteServiceServlet implements Vocab
                     "order by w.wordId desc\n";
     private static final String GET_WORDS_COUNT_WITHOUT_PAGING =
             "select count(*) from (" + GET_WORDS_SQL + ")";
-    private static final String ADD_WORD_START_SQL = "insert into words values(";
     private static final String GET_ID_FOR_WORD_SQL =
             "with max_lng_Id as (" +
                     "select max(langId) + 1 as lngId from languages)\n" +
