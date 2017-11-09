@@ -39,6 +39,7 @@ public class PagerPanel extends HorizontalPanel {
         });
 
         pageNumber = new TextBox();
+        pageNumber.setTitle("Page");
         pageNumber.setEnabled(false);
         pageNumber.setText("1");
         pageNumber.getElement().getStyle().setWidth(20, Style.Unit.PX);

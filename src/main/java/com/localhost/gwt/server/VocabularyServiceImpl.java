@@ -20,6 +20,8 @@ import java.util.*;
 public class VocabularyServiceImpl extends RemoteServiceServlet implements VocabularyService {
     private static final String driverName = "org.sqlite.JDBC";
     private static final String connectionString = "jdbc:sqlite::resource:/vocabulary.s3db";
+    private static final String fullConnectionString = "jdbc:sqlite:C:/Users/AlexL/Desktop/Java_projects" +
+            "/Vocabulary/src/main/resources/vocabulary.s3db";
     private static final String GET_WORDS_SQL =
                     "select w.*, l.lang_name, l.lang_short_name from\n" +
                     "  words w, languages l, words_levels wl\n" +
@@ -130,7 +132,7 @@ public class VocabularyServiceImpl extends RemoteServiceServlet implements Vocab
             return response;
         }
         PreparedStatement statement;
-        Map<String, Word> wordMap = new HashMap<String, Word>();
+        Map<String, Word> wordMap = new LinkedHashMap<String, Word>();
         try {
             initConnection();
             int pageNumber = pagerItem.getPageNum();
@@ -188,7 +190,11 @@ public class VocabularyServiceImpl extends RemoteServiceServlet implements Vocab
             return;
         }
         Class.forName(driverName);
-        connection = DriverManager.getConnection(connectionString);
+        try {
+            connection = DriverManager.getConnection(connectionString);
+        }catch (SQLException ex) {
+            connection = DriverManager.getConnection(fullConnectionString);
+        }
     }
 
     private String createTraceString(Exception ex) {

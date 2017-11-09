@@ -17,9 +17,11 @@ import java.util.*;
 public class ImporterHelper {
     private ImporterHelper(){}
 
+    private static final String EMPTY_TRANSCRIPTION = "[]";
+
     public static void main(String... arg) throws Exception {
         importFile(new HashMap<String, Object>() { {
-            put(Constants.FileImport.FILE_NAME, "Pre-intermediate (English).txt");
+            put(Constants.FileImport.FILE_NAME, "Phrases1.txt");
             put(Constants.FileImport.IGNORE_LINE_SYMBOLS, Collections.singletonList("//"));
             put(Constants.FileImport.SEPARATOR, "\\s*\\|\\s*");
             put(Constants.FileImport.COLUMNS, new ArrayList<Column>() {
@@ -67,9 +69,9 @@ public class ImporterHelper {
                 translation = new Translation();
             }
             if (column.type == ColumnType.WORD) {
-                translation.setWord(columnValues[i]);
-            } else if (column.type == ColumnType.TRANSCRIPTION) {
-                translation.setTranscription(columnValues[i]);
+                translation.setWord(columnValues[i].replaceAll("'", "''"));
+            } else if (column.type == ColumnType.TRANSCRIPTION && !EMPTY_TRANSCRIPTION.equals(columnValues[i])) {
+                translation.setTranscription(columnValues[i].replaceAll("'", "''"));
             }
             word.addTranslation(language, translation);
         }
