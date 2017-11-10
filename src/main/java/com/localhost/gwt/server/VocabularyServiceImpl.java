@@ -23,7 +23,7 @@ public class VocabularyServiceImpl extends RemoteServiceServlet implements Vocab
     private static final String connectionString = "jdbc:sqlite::resource:/vocabulary.s3db";
     private static final String fullConnectionString = ("jdbc:sqlite:" + new File(".").getAbsolutePath() +
             "/src/main/resources/vocabulary.s3db").replaceAll("\\\\", "/");
-    
+
     private static final String GET_WORDS_SQL =
                     "select w.*, l.lang_name, l.lang_short_name from\n" +
                     "  words w, languages l, words_levels wl\n" +
