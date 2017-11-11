@@ -21,7 +21,7 @@ public class ImporterHelper {
 
     public static void main(String... arg) throws Exception {
         importFile(new HashMap<String, Object>() { {
-            put(Constants.FileImport.FILE_NAME, "Phrases1.txt");
+            put(Constants.FileImport.FILE_NAME, "Phrases2.txt");
             put(Constants.FileImport.IGNORE_LINE_SYMBOLS, Collections.singletonList("//"));
             put(Constants.FileImport.SEPARATOR, "\\s*\\|\\s*");
             put(Constants.FileImport.COLUMNS, new ArrayList<Column>() {

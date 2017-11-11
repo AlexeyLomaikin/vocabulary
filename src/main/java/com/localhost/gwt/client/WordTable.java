@@ -24,19 +24,29 @@ public class WordTable extends FlexTable {
     private static int LISTENING_COLUMN = 2;
 
     public WordTable() {
-
+        addStyleName(Constants.Styles.WORD_TABLE);
+        GQuery.$(GQuery.document).keydown(new Function() {
+            @Override
+            public boolean f(Event e) {
+                if (!isVisible()) {
+                    return true;
+                }
+                if (e.getShiftKey() && e.getKeyCode() == KeyCodes.KEY_A) {
+                    for (int row = 1; row < getRowCount(); row++) {
+                        GQuery.$(getWidget(row, TRANSCRIPTION_COLUMN)).click();
+                        e.stopPropagation();
+                        e.preventDefault();
+                    }
+                }
+                return true;
+            }
+        });
     }
 
-    public void redraw (List<Word> words, boolean listBoxesEmpty) {
-        setVisible(true);
+    public void redraw (List<Word> words) {
         removeAllRows();
-        addStyleName(Constants.Styles.WORD_TABLE);
-        if (ObjectUtils.isEmpty(words) && !listBoxesEmpty) {
-            setText(0,0, "No words for this section!");
-            return;
-        }
         if (ObjectUtils.isEmpty(words)) {
-            setVisible(false);
+            setText(0,0, "No words for this section!");
             return;
         }
         setText(HEADER_ROW, WORD_COLUMN, "Word");
@@ -54,19 +64,6 @@ public class WordTable extends FlexTable {
                 row++;
             }
         }
-        GQuery.$(GQuery.document).keydown(new Function() {
-            @Override
-            public boolean f(Event e) {
-                if (e.getShiftKey() && e.getKeyCode() == KeyCodes.KEY_A) {
-                    for (int row = 1; row < getRowCount(); row++) {
-                        GQuery.$(getWidget(row, TRANSCRIPTION_COLUMN)).click();
-                        e.stopPropagation();
-                        e.preventDefault();
-                    }
-                }
-                return true;
-            }
-        });
     }
 
     private Button getVoiceBtn(final int row) {
@@ -85,6 +82,7 @@ public class WordTable extends FlexTable {
         showBtn.addStyleName(Constants.Styles.SHOW_BUTTON);
         showBtn.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
+
                 final Anchor anchor = new Anchor(transcription);
                 anchor.addClickHandler(new ClickHandler() {
                     public void onClick(ClickEvent clickEvent) {
@@ -95,6 +93,7 @@ public class WordTable extends FlexTable {
                         }
                     }
                 });
+
                 boolean hasFocus = GQuery.$(showBtn).is(":focus");
                 setWidget(row, TRANSCRIPTION_COLUMN, anchor);
                 if (hasFocus) {

@@ -10,6 +10,9 @@ import com.localhost.gwt.shared.model.Word;
 import com.localhost.gwt.client.service.VocabularyService;
 import com.localhost.gwt.shared.model.Level;
 import com.localhost.gwt.shared.model.Translation;
+import com.localhost.gwt.shared.transport.ServiceRequest;
+import com.localhost.gwt.shared.transport.ServiceResponse;
+import org.sqlite.Function;
 
 import java.io.File;
 import java.sql.*;
@@ -32,17 +35,7 @@ public class VocabularyServiceImpl extends RemoteServiceServlet implements Vocab
                     "and w.langId = ?\n" +
                     "and wl.wordId = w.wordId\n" +
                     "order by w.wordId desc\n";
-    private static final String GET_WORDS_COUNT_WITHOUT_PAGING =
-            "select count(*) from (" + GET_WORDS_SQL + ")";
-    private static final String GET_ID_FOR_WORD_SQL =
-            "with max_lng_Id as (" +
-                    "select max(langId) + 1 as lngId from languages)\n" +
-                    "select \n" +
-                    "case max(wordId)\n" +
-                    "  when null then (select lngId from max_lng_id)\n" +
-                    "  else max((select lngId from max_lng_id), max(wordId) + 1)\n" +
-                    "end as newId\n" +
-                    "from words";
+    private static final String GET_ID_FOR_WORD_SQL = "select id from next_word";
 
     private static Connection connection;
 
@@ -59,7 +52,7 @@ public class VocabularyServiceImpl extends RemoteServiceServlet implements Vocab
             response.setLevels(dao.queryForAll());
             return response;
         } catch (SQLException ex) {
-            throw new SharedRuntimeException(createTraceString(ex));
+            throw new SharedRuntimeException(ex.getMessage());
         }
     }
 
@@ -129,22 +122,23 @@ public class VocabularyServiceImpl extends RemoteServiceServlet implements Vocab
         return words;
     }
 
-    public ServiceResponse getWords(String levelId, String langId, PagerItem pagerItem) throws SharedRuntimeException {
+    public ServiceResponse getWords(ServiceRequest request) throws SharedRuntimeException {
         ServiceResponse response = new ServiceResponse();
-        if (ObjectUtils.isEmpty(langId) || ObjectUtils.isEmpty(levelId)) {
+        if (ObjectUtils.isEmpty(request.getLangId()) || ObjectUtils.isEmpty(request.getLevelId())) {
             return response;
         }
+        final String getWordsSQL = getFilteredWordsSql(request.getSearchKey());
         PreparedStatement statement;
         Map<String, Word> wordMap = new LinkedHashMap<String, Word>();
         try {
             initConnection();
-            int pageNumber = pagerItem.getPageNum();
-            int pageLimit = pagerItem.getPageLimit();
+            int pageNumber = request.getPagerItem().getPageNum();
+            int pageLimit = request.getPagerItem().getPageLimit();
             int offset = (pageNumber - 1) * pageLimit;
-            String sql = GET_WORDS_SQL + "limit " + pageLimit + " offset " + offset;
+            String sql = getWordsSQL + "limit " + pageLimit + " offset " + offset;
             statement = connection.prepareStatement(sql);
-            statement.setString(1, levelId);
-            statement.setString(2, langId);
+            statement.setString(1, request.getLevelId());
+            statement.setString(2, request.getLangId());
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 String wordId = rs.getString(Constants.FieldNames.WORD_ID);
@@ -161,14 +155,26 @@ public class VocabularyServiceImpl extends RemoteServiceServlet implements Vocab
             }
             response.setWords(new ArrayList<Word>(wordMap.values()));
 
-            statement = connection.prepareStatement(GET_WORDS_COUNT_WITHOUT_PAGING);
-            statement.setString(1, levelId);
-            statement.setString(2, langId);
+            statement = connection.prepareStatement(getWordCountSQL(getWordsSQL));
+            statement.setString(1, request.getLevelId());
+            statement.setString(2, request.getLangId());
             response.addParam(Constants.TABLE_SIZE, statement.executeQuery().getString(1));
             return response;
         } catch (Exception e) {
             throw new SharedRuntimeException(e.getMessage());
         }
+    }
+
+    private String getFilteredWordsSql(String searchKey) {
+        if (searchKey == null) {
+            return GET_WORDS_SQL;
+        }
+        return "select * from (\n" + GET_WORDS_SQL + ")\n " +
+                "where lowerUtf(word) LIKE '%" + searchKey.toLowerCase() + "%'";
+    }
+
+    private String getWordCountSQL (String getWordsSql) {
+        return "select count(*) from\n (" + getWordsSql + ")";
     }
 
     public ServiceResponse getLanguages() throws SharedRuntimeException {
@@ -198,14 +204,12 @@ public class VocabularyServiceImpl extends RemoteServiceServlet implements Vocab
         }catch (SQLException ex) {
             connection = DriverManager.getConnection(fullConnectionString);
         }
-    }
-
-    private String createTraceString(Exception ex) {
-        String s = "";
-        StackTraceElement[] stackTraceElements = ex.getStackTrace();
-        for (StackTraceElement stackTraceElement: stackTraceElements) {
-            s += stackTraceElement.getClassName() + stackTraceElement.getMethodName() + "\n";
-        }
-        return s;
+        Function.create(connection, "lowerUtf", new Function() {
+            @Override
+            protected void xFunc() throws SQLException {
+                String str = value_text(0);
+                result(str.toLowerCase());
+            }
+        });
     }
 }

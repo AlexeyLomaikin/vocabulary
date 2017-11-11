@@ -23,6 +23,31 @@
     background: url(show_btn.png) no-repeat top right !important;
 }
 
+.pager_panel .next_page_btn {
+    background: url(next.png) no-repeat top right !important;
+}
+
+.pager_panel .prev_page_btn {
+    background: url(back.png) no-repeat top right !important;
+}
+
+.search_field {
+    position: relative;
+    top: 20px;
+    left: 130px;
+}
+
+.pager_panel button {
+    border: none;
+    height: 22px;
+    width: 22px;
+}
+
+.pager_panel input {
+    height: 14px;
+    width: 20px;
+}
+
 .list_label {
     font-size: 20px;
 }

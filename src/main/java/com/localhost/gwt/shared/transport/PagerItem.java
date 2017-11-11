@@ -1,4 +1,4 @@
-package com.localhost.gwt.shared;
+package com.localhost.gwt.shared.transport;
 
 import java.io.Serializable;
 
@@ -7,7 +7,7 @@ import java.io.Serializable;
  */
 public class PagerItem implements Serializable {
     int pageNum = 1;
-    int pageLimit = 10;
+    int pageLimit = 5;
 
     public PagerItem() {}
     public PagerItem(int pageNum, int pageLimit) {

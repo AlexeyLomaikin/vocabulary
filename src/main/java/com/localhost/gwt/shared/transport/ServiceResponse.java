@@ -1,4 +1,4 @@
-package com.localhost.gwt.shared;
+package com.localhost.gwt.shared.transport;
 
 import com.localhost.gwt.shared.model.Language;
 import com.localhost.gwt.shared.model.Level;

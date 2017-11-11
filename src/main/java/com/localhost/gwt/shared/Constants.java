@@ -34,6 +34,9 @@ public interface Constants {
         String CREATE_WORD_TABLE = "create_word_table";
         String LIST_PANEL = "list_panel";
         String PAGER_PANEL = "pager_panel";
+        String NEXT_PAGE_BTN = "next_page_btn";
+        String PREV_PAGE_BTN = "prev_page_btn";
+        String SEARCH_FIELD = "search_field";
     }
 
     interface LevelIds {
