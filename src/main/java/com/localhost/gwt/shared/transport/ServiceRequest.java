@@ -1,7 +1,9 @@
 package com.localhost.gwt.shared.transport;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -11,6 +13,7 @@ public class ServiceRequest implements Serializable {
     private String levelId;
     private String langId;
     private PagerItem pagerItem;
+    private List<Integer> fetchIds = new ArrayList<Integer>();
     private String searchKey;
     private Map<String, String> params = new HashMap<String, String>();
 
@@ -44,6 +47,14 @@ public class ServiceRequest implements Serializable {
 
     public void setSearchKey(String searchKey) {
         this.searchKey = searchKey;
+    }
+
+    public List<Integer> getFetchIds() {
+        return fetchIds;
+    }
+
+    public void setFetchIds(List<Integer> fetchIds) {
+        this.fetchIds = fetchIds;
     }
 
     public Map<String, String> getParams() {

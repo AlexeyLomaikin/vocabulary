@@ -9,6 +9,7 @@ public interface Constants {
         String IGNORE_LINE_SYMBOLS = "ignoreSymbols";
         String FILE_NAME = "fileName";
         String COLUMNS = "columns";
+        String CREATE_RULES_FILE = "needFile";
     }
 
     interface FieldNames {

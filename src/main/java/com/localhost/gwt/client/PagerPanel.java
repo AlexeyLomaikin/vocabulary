@@ -1,14 +1,12 @@
 package com.localhost.gwt.client;
 
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.query.client.Function;
 import com.google.gwt.query.client.GQuery;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.*;
 import com.localhost.gwt.shared.Constants;
-import com.localhost.gwt.shared.ObjectUtils;
+import com.localhost.gwt.shared.utils.StringUtils;
 
 /**
  * Created by AlexL on 08.11.2017.
@@ -91,16 +89,21 @@ public class PagerPanel extends HorizontalPanel {
             @Override
             public void onKeyUp(KeyUpEvent keyUpEvent) {
                 String value = pageNumber.getText();
-                if (ObjectUtils.isEmpty(value)) {
+                if (StringUtils.isEmptyOrSpace(value)) {
                     return;
                 }
                 char lastSymbol = value.charAt(value.length() - 1);
                 if (!Character.isDigit(lastSymbol)) {
                     pageNumber.setText(value.substring(0, value.length() - 1));
+                    return;
                 }
-                int page = Integer.parseInt(value);
-                if (page != currentPage && page < getLastPage() + 1) {
-                    setPage(currentPage = page);
+                try {
+                    int page = Integer.parseInt(value);
+                    if (page != currentPage && page < getLastPage() + 1) {
+                        setPage(currentPage = page);
+                    }
+                }catch (NumberFormatException ex) {
+                    GQuery.console.log(ex.getMessage());
                 }
             }
         });

@@ -1,6 +1,5 @@
 package com.localhost.gwt.client;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.query.client.Function;
@@ -8,15 +7,14 @@ import com.google.gwt.query.client.GQuery;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.*;
-import com.localhost.gwt.client.service.VocabularyService;
-import com.localhost.gwt.client.service.VocabularyServiceAsync;
 import com.localhost.gwt.shared.Constants;
-import com.localhost.gwt.shared.ObjectUtils;
+import com.localhost.gwt.shared.utils.CollectionUtils;
 import com.localhost.gwt.shared.transport.PagerItem;
 import com.localhost.gwt.shared.transport.ServiceRequest;
 import com.localhost.gwt.shared.transport.ServiceResponse;
 import com.localhost.gwt.shared.model.Language;
 import com.localhost.gwt.shared.model.Level;
+import com.localhost.gwt.shared.utils.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -25,9 +23,6 @@ import java.util.Map;
  * Created by AlexL on 06.10.2017.
  */
 public class EntryPoint implements com.google.gwt.core.client.EntryPoint {
-
-    private VocabularyServiceAsync asyncService = GWT.create(VocabularyService.class);
-
     private ListBox levelChooser = new ListBox();
     private ListBox langChooser = new ListBox();
     private WordTable wordsTable = new WordTable();
@@ -41,6 +36,7 @@ public class EntryPoint implements com.google.gwt.core.client.EntryPoint {
 
     private List<Language> languages;
     private List<Level> levels;
+    private DataManager dataManager = new DataManager();
     private String lastSearchKey = "";
 
     public void onModuleLoad() {
@@ -51,7 +47,7 @@ public class EntryPoint implements com.google.gwt.core.client.EntryPoint {
         RootPanel.get().add(pagerPanel);
         wordsTable.setVisible(false);
         pagerPanel.setVisible(false);
-        asyncService.getLevels(new AsyncCallback<ServiceResponse>() {
+        dataManager.loadLevels(new AsyncCallback<ServiceResponse>() {
             public void onFailure(Throwable throwable) {
                 Window.alert(throwable.getMessage());
             }
@@ -67,7 +63,7 @@ public class EntryPoint implements com.google.gwt.core.client.EntryPoint {
                 });
             }
         });
-        asyncService.getLanguages(new AsyncCallback<ServiceResponse>() {
+        dataManager.loadLanguages(new AsyncCallback<ServiceResponse>() {
             public void onFailure(Throwable throwable) {
                 Window.alert(throwable.getMessage());
             }
@@ -93,7 +89,7 @@ public class EntryPoint implements com.google.gwt.core.client.EntryPoint {
             @Override
             public void f(Element e) {
                 String searchKey = searchField.getValue();
-                if (ObjectUtils.isEmpty(searchKey) && !ObjectUtils.isEmpty(lastSearchKey)) {
+                if (StringUtils.isEmpty(searchKey) && !StringUtils.isEmpty(lastSearchKey)) {
                     lastSearchKey = "";
                     pagerPanel.setPage(1);
                 }
@@ -104,7 +100,7 @@ public class EntryPoint implements com.google.gwt.core.client.EntryPoint {
             public void onKeyDown(KeyDownEvent keyDownEvent) {
                 if (keyDownEvent.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
                     String searchKey = searchField.getValue();
-                    if (!lastSearchKey.equals(searchKey)) {
+                    if (!StringUtils.isEmptyOrSpace(searchKey) && !lastSearchKey.equals(searchKey)) {
                         lastSearchKey = searchKey;
                         pagerPanel.setPage(1);
                     }
@@ -169,26 +165,33 @@ public class EntryPoint implements com.google.gwt.core.client.EntryPoint {
     private void getWords() {
         String levelId = levelChooser.getSelectedValue();
         String landId = langChooser.getSelectedValue();
-        if (ObjectUtils.isEmpty(levelId) || ObjectUtils.isEmpty(landId)) {
+        if (StringUtils.isEmpty(levelId) || StringUtils.isEmpty(landId)) {
             wordsTable.setVisible(false);
             pagerPanel.setVisible(false);
             searchField.setVisible(false);
             return;
         }
-        String searchKey = searchField.getValue();
+        final String searchKey = searchField.getValue();
         PagerItem pagerItem = new PagerItem(pagerPanel.getCurrentPage(), pagerPanel.getLimit());
 
         final ServiceRequest request = initRequest(levelId, landId, pagerItem, searchKey, null);
-        asyncService.getWords(request, new AsyncCallback<ServiceResponse>() {
+        if (dataManager.getRequest() != null) {
+            boolean langChanged = !landId.equals(dataManager.getRequest().getLangId());
+            boolean searchKeyChanged = !searchKey.equals(dataManager.getRequest().getSearchKey());
+            if (langChanged && !searchKeyChanged) {
+                request.setFetchIds(dataManager.getResponse().getWordIds());
+            }
+        }
+        dataManager.loadWords(request, new AsyncCallback<ServiceResponse>() {
             public void onFailure(Throwable throwable) {
                 Window.alert(throwable.getMessage());
             }
             public void onSuccess(ServiceResponse response) {
-                searchField.setVisible(!ObjectUtils.isEmpty(request.getSearchKey()) ||
-                        !ObjectUtils.isEmpty(response.getWords()));
-                pagerPanel.setVisible(!ObjectUtils.isEmpty(response.getWords()));
+                searchField.setVisible(!StringUtils.isEmpty(request.getSearchKey()) ||
+                        !CollectionUtils.isEmpty(response.getWords()));
+                pagerPanel.setVisible(!CollectionUtils.isEmpty(response.getWords()));
                 wordsTable.setVisible(true);
-                wordsTable.redraw(response.getWords());
+                wordsTable.redraw(response.getWords(), !StringUtils.isEmpty(searchKey));
                 String tableSizeString = response.getParam(Constants.TABLE_SIZE);
                 if (tableSizeString != null) {
                     pagerPanel.setTableSize(Integer.valueOf(tableSizeString));

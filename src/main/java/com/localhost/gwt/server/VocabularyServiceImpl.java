@@ -12,6 +12,8 @@ import com.localhost.gwt.shared.model.Level;
 import com.localhost.gwt.shared.model.Translation;
 import com.localhost.gwt.shared.transport.ServiceRequest;
 import com.localhost.gwt.shared.transport.ServiceResponse;
+import com.localhost.gwt.shared.utils.CollectionUtils;
+import com.localhost.gwt.shared.utils.StringUtils;
 import org.sqlite.Function;
 
 import java.io.File;
@@ -38,11 +40,6 @@ public class VocabularyServiceImpl extends RemoteServiceServlet implements Vocab
     private static final String GET_ID_FOR_WORD_SQL = "select id from next_word";
 
     private static Connection connection;
-
-    private static VocabularyServiceImpl INSTANCE = new VocabularyServiceImpl();
-    public static VocabularyServiceImpl getInstance() {
-        return INSTANCE;
-    }
 
     public ServiceResponse getLevels() throws SharedRuntimeException {
         try {
@@ -124,12 +121,9 @@ public class VocabularyServiceImpl extends RemoteServiceServlet implements Vocab
 
     public ServiceResponse getWords(ServiceRequest request) throws SharedRuntimeException {
         ServiceResponse response = new ServiceResponse();
-        if (ObjectUtils.isEmpty(request.getLangId()) || ObjectUtils.isEmpty(request.getLevelId())) {
-            return response;
-        }
-        final String getWordsSQL = getFilteredWordsSql(request.getSearchKey());
+        final String getWordsSQL = getFilteredWordsSql(request);
         PreparedStatement statement;
-        Map<String, Word> wordMap = new LinkedHashMap<String, Word>();
+        Map<Integer, Word> wordMap = new LinkedHashMap<Integer, Word>();
         try {
             initConnection();
             int pageNumber = request.getPagerItem().getPageNum();
@@ -141,10 +135,10 @@ public class VocabularyServiceImpl extends RemoteServiceServlet implements Vocab
             statement.setString(2, request.getLangId());
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
-                String wordId = rs.getString(Constants.FieldNames.WORD_ID);
+                Integer wordId = rs.getInt(Constants.FieldNames.WORD_ID);
                 Word word = wordMap.get(wordId);
                 if (word == null) {
-                    word = new Word();
+                    word = new Word(wordId);
                 }
                 Language language = new Language(rs.getInt(Constants.FieldNames.LANGUAGE_ID),
                         rs.getString(Constants.FieldNames.LANGUAGE_NAME), rs.getString(Constants.FieldNames.LANGUAGE_SHORT_NAME));
@@ -165,12 +159,24 @@ public class VocabularyServiceImpl extends RemoteServiceServlet implements Vocab
         }
     }
 
-    private String getFilteredWordsSql(String searchKey) {
-        if (searchKey == null) {
-            return GET_WORDS_SQL;
+    private String getFilteredWordsSql(ServiceRequest request) {
+        List<Integer> fetchIds = request.getFetchIds();
+        if (!CollectionUtils.isEmpty(fetchIds)) {
+            String inClause = "where wordId in (";
+            for (int i = 0; i < fetchIds.size(); i++) {
+                inClause += fetchIds.get(i);
+                if (i < fetchIds.size() - 1) {
+                    inClause += ", ";
+                }
+            }
+            inClause += ")";
+            return "select * from (\n" + GET_WORDS_SQL + ")\n " + inClause;
         }
-        return "select * from (\n" + GET_WORDS_SQL + ")\n " +
-                "where lowerUtf(word) LIKE '%" + searchKey.toLowerCase() + "%'";
+        if (request.getSearchKey() != null) {
+            return "select * from (\n" + GET_WORDS_SQL + ")\n " +
+                    "where lowerUtf(word) LIKE '%" + request.getSearchKey().toLowerCase() + "%'";
+        }
+        return GET_WORDS_SQL;
     }
 
     private String getWordCountSQL (String getWordsSql) {

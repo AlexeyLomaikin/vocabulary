@@ -6,7 +6,7 @@ import com.google.gwt.query.client.GQuery;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.*;
 import com.localhost.gwt.shared.Constants;
-import com.localhost.gwt.shared.ObjectUtils;
+import com.localhost.gwt.shared.utils.CollectionUtils;
 import com.localhost.gwt.shared.model.Language;
 import com.localhost.gwt.shared.model.Word;
 import com.localhost.gwt.shared.model.Translation;
@@ -22,6 +22,9 @@ public class WordTable extends FlexTable {
     private static int WORD_COLUMN = 0;
     private static int TRANSCRIPTION_COLUMN = 1;
     private static int LISTENING_COLUMN = 2;
+
+    private static final String EMPTY_SECTION_MESSAGE = "No words for this section";
+    private static final String EMPTY_RES_MESSAGE = "No results found";
 
     public WordTable() {
         addStyleName(Constants.Styles.WORD_TABLE);
@@ -43,10 +46,10 @@ public class WordTable extends FlexTable {
         });
     }
 
-    public void redraw (List<Word> words) {
+    public void redraw (List<Word> words, boolean search) {
         removeAllRows();
-        if (ObjectUtils.isEmpty(words)) {
-            setText(0,0, "No words for this section!");
+        if (CollectionUtils.isEmpty(words)) {
+            setText(0,0, search ? EMPTY_RES_MESSAGE : EMPTY_SECTION_MESSAGE);
             return;
         }
         setText(HEADER_ROW, WORD_COLUMN, "Word");

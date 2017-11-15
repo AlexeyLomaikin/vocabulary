@@ -3,6 +3,7 @@ package com.localhost.gwt.shared.transport;
 import com.localhost.gwt.shared.model.Language;
 import com.localhost.gwt.shared.model.Level;
 import com.localhost.gwt.shared.model.Word;
+import com.localhost.gwt.shared.utils.CollectionUtils;
 
 import java.io.Serializable;
 import java.util.*;
@@ -11,6 +12,7 @@ import java.util.*;
  * Created by AlexL on 08.11.2017.
  */
 public class ServiceResponse implements Serializable {
+    private List<Integer> wordIds = new ArrayList<Integer>();
     private List<Word> words;
     private List<Level> levels;
     private List<Language> languages;
@@ -26,6 +28,15 @@ public class ServiceResponse implements Serializable {
 
     public void setWords(List<Word> words) {
         this.words = words;
+        if (!CollectionUtils.isEmpty(words)) {
+            for (Word word: words) {
+                wordIds.add(word.getWordId());
+            }
+        }
+    }
+
+    public List<Integer> getWordIds() {
+        return wordIds;
     }
 
     public List<Language> getLanguages() {
